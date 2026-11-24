@@ -296,20 +296,22 @@ function initResizers() {
       const move = (moveEvent) => {
         state[spec.key] = clamp(startWidth + (moveEvent.clientX - startX), limits.min, limits.max);
         applyRailWidths();
+        // 自适应宽度依赖 reader.clientWidth，拖动过程中同步重算，不能等 ResizeObserver。
+        applyBodyScale();
       };
 
       const stop = () => {
-        spec.el.removeEventListener("pointermove", move);
-        spec.el.removeEventListener("pointerup", stop);
-        spec.el.removeEventListener("pointercancel", stop);
+        window.removeEventListener("pointermove", move);
+        window.removeEventListener("pointerup", stop);
+        window.removeEventListener("pointercancel", stop);
         spec.el.classList.remove("is-dragging");
         document.body.classList.remove("is-resizing");
         saveSettings();
       };
 
-      spec.el.addEventListener("pointermove", move);
-      spec.el.addEventListener("pointerup", stop);
-      spec.el.addEventListener("pointercancel", stop);
+      window.addEventListener("pointermove", move);
+      window.addEventListener("pointerup", stop);
+      window.addEventListener("pointercancel", stop);
     });
   }
 }
@@ -322,7 +324,7 @@ function applyBodyScale() {
   const readerWidth = els.reader?.clientWidth || Math.max(320, viewport - 528);
   const available = Math.max(280, readerWidth - gutter);
   const basePage = 920;
-  const baseText = basePage - basePad * 2;
+  const baseRead = 720;
   const mobile = viewport <= 620;
   const fixed = state.contentScale !== "fit";
   const scale = fixed ? Number(state.contentScale) : 1;
@@ -330,23 +332,29 @@ function applyBodyScale() {
   let page;
   let zoom;
   let pad;
+  let read;
 
   if (mobile) {
     page = available;
     zoom = 1;
     pad = basePad;
+    read = Math.max(240, available - pad * 2);
   } else if (state.contentMode === "zoom") {
     page = basePage;
     pad = basePad;
     zoom = fixed ? scale : available / basePage;
+    read = baseRead;
   } else {
     zoom = 1;
     pad = basePad;
     if (fixed) {
-      page = Math.round(baseText * scale + pad * 2);
+      read = Math.round(baseRead * scale);
+      page = Math.max(basePage, read + pad * 2);
       if (scale === 1) page = Math.min(page, available);
+      read = Math.min(read, Math.max(240, page - pad * 2));
     } else {
       page = available;
+      read = Math.min(baseRead, Math.max(240, available - pad * 2));
     }
   }
 
@@ -355,6 +363,7 @@ function applyBodyScale() {
   root.style.setProperty("--sheet-gutter", `${gutter}px`);
   root.style.setProperty("--sheet-width", `${page}px`);
   root.style.setProperty("--sheet-pad", `${pad}px`);
+  root.style.setProperty("--reading-width", `${read}px`);
   root.style.setProperty("--sheet-zoom", String(Number(zoom.toFixed(4))));
   root.style.setProperty("--bar-max", `${visualPage}px`);
   root.style.setProperty("--reader-size", `${state.size}px`);

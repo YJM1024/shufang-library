@@ -1807,7 +1807,7 @@ body.is-resizing {
 /* ---------- 章节 ---------- */
 
 .chapter {
-  max-width: 720px;
+  max-width: var(--reading-width, 720px);
   margin: 0 auto;
   padding: 82px 0 0;
 }
