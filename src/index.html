@@ -1,0 +1,124 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#1B1915">
+  <title>书房 · 深度求索技术书系</title>
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' fill='%231B1915'/%3E%3Cpath d='M10 7h12v18l-6-4-6 4z' fill='%23F7F2E7'/%3E%3C/svg%3E">
+  <link rel="stylesheet" href="./style.css">
+</head>
+<body data-theme="paper">
+  <div class="boot" id="boot">
+    <div class="boot-mark">书</div>
+    <p class="boot-title">书房</p>
+    <p class="boot-sub">DEEPSEEK TECHNICAL LIBRARY</p>
+    <div class="boot-line"><i></i></div>
+    <p class="boot-note">正在装订</p>
+  </div>
+
+  <div class="boot-error" id="boot-error" hidden>
+    <div class="error-card">
+      <p class="kicker">LIBRARY OFFLINE</p>
+      <h1>书库没有打开</h1>
+      <p id="boot-error-text">没有读到书库数据。请确认本地服务已经启动。</p>
+      <pre>node tools/build.mjs
+node serve.mjs</pre>
+      <p class="error-note">数据来自 <code>site/data/</code>，页面通过本地 HTTP 读取。</p>
+    </div>
+  </div>
+
+  <div class="app" id="app" hidden>
+    <aside class="rail rail-books" id="rail-books">
+      <div class="rail-head">
+        <a class="brand" href="./" id="brand" aria-label="书房首页">
+          <span class="brand-mark" aria-hidden="true">书</span>
+          <span class="brand-text"><strong>书房</strong><small>DEEPSEEK LIBRARY</small></span>
+        </a>
+        <p class="rail-note"><span id="book-count">0</span> 本在架</p>
+      </div>
+      <div class="book-list" id="book-list"></div>
+      <div class="rail-foot">本地演示 · 已读与书签保存在此浏览器</div>
+    </aside>
+
+    <nav class="rail rail-toc" id="rail-toc" aria-label="章节导航">
+      <div class="rail-head toc-head">
+        <p class="toc-book" id="toc-book"></p>
+        <p class="toc-sub" id="toc-sub"></p>
+        <div class="toc-progress">
+          <span id="toc-progress-text">已读 0 / 0</span>
+          <span class="toc-progress-bar" aria-hidden="true"><i id="toc-progress-fill"></i></span>
+        </div>
+      </div>
+      <div class="toc-list" id="toc-list"></div>
+      <div class="rail-foot toc-foot">方向键切换章节</div>
+    </nav>
+
+    <div class="col-resizer" id="resize-books" role="separator" aria-orientation="vertical" aria-label="调整书库栏宽度" data-resizer="books"></div>
+    <div class="col-resizer" id="resize-toc" role="separator" aria-orientation="vertical" aria-label="调整目录栏宽度" data-resizer="toc"></div>
+
+    <main class="reader" id="reader">
+      <div class="reader-mask" aria-hidden="true"></div>
+      <header class="reader-bar" id="reader-bar" aria-label="阅读工具栏">
+        <div class="bar-left">
+          <button type="button" class="bar-drawer" id="btn-books" aria-label="打开书库">书库</button>
+          <button type="button" class="bar-drawer" id="btn-toc" aria-label="打开目录">目录</button>
+          <span class="bar-book" id="bar-book"></span>
+          <span class="bar-sep" aria-hidden="true">/</span>
+          <span class="bar-section" id="bar-section">封面</span>
+        </div>
+        <div class="bar-right">
+          <span class="bar-progress" id="bar-progress"></span>
+          <button type="button" class="bar-btn" id="btn-settings" aria-expanded="false" aria-controls="settings">Aa</button>
+          <button type="button" class="bar-btn" id="btn-theme" aria-label="切换纸色">夜</button>
+        </div>
+        <span class="bar-scroll" id="bar-scroll" aria-hidden="true"></span>
+
+        <div class="settings" id="settings" hidden>
+          <div class="settings-head"><span>阅读设置</span><button type="button" class="settings-close" data-close-settings aria-label="关闭">×</button></div>
+          <div class="settings-row">
+            <span class="settings-label">字号</span>
+            <div class="size-control">
+              <button type="button" data-size="-1" aria-label="减小字号">A−</button>
+              <output id="size-val">17</output>
+              <button type="button" data-size="1" aria-label="增大字号">A+</button>
+            </div>
+          </div>
+          <div class="settings-row">
+            <span class="settings-label">纸色</span>
+            <div class="theme-control">
+              <button type="button" data-set-theme="paper">纸</button>
+              <button type="button" data-set-theme="night">夜</button>
+            </div>
+          </div>
+        </div>
+      </header>
+      <div class="sheet" id="sheet"></div>
+    </main>
+
+    <div class="scrim" id="scrim" hidden></div>
+  </div>
+
+  <div class="lightbox" id="cover-lightbox" hidden>
+    <div class="lightbox-backdrop" data-lightbox-close></div>
+    <div class="lightbox-panel" role="dialog" aria-modal="true" aria-label="封面预览">
+      <div class="lightbox-bar">
+        <p class="lightbox-title" id="lightbox-title">封面</p>
+        <div class="lightbox-tools">
+          <button type="button" class="lightbox-btn" id="lightbox-zoom-out" aria-label="缩小">−</button>
+          <span class="lightbox-zoom" id="lightbox-zoom">100%</span>
+          <button type="button" class="lightbox-btn" id="lightbox-zoom-in" aria-label="放大">+</button>
+          <button type="button" class="lightbox-btn lightbox-close" id="lightbox-close" aria-label="关闭">×</button>
+        </div>
+      </div>
+      <div class="lightbox-stage" id="lightbox-stage">
+        <img class="lightbox-img" id="lightbox-img" alt="">
+        <div class="lightbox-fallback" id="lightbox-fallback" hidden></div>
+      </div>
+      <p class="lightbox-hint">滚轮缩放 · 拖动查看 · Esc 关闭</p>
+    </div>
+  </div>
+
+  <script type="module" src="./app.js"></script>
+</body>
+</html>

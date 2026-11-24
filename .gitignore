@@ -1,0 +1,13 @@
+# 本机运行产物与浏览器测试配置，不进备份
+.chrome-*/
+.cp*/
+.tmp/
+.shots/
+state/
+*.log
+server.log
+
+# 系统垃圾文件
+.DS_Store
+Thumbs.db
+desktop.ini
