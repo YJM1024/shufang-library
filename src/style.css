@@ -2274,7 +2274,7 @@ body[data-theme="night"] .tool-btn.is-on {
   font-family: var(--mono);
   font-size: 7.5px;
   letter-spacing: 0.16em;
-  color: var(--accent);
+  color: color-mix(in srgb, var(--accent) 38%, #f0e7d8);
 }
 
 .back-audience ul {
@@ -2299,7 +2299,7 @@ body[data-theme="night"] .tool-btn.is-on {
   left: 0;
   width: 4px;
   height: 1px;
-  background: var(--accent);
+  background: color-mix(in srgb, var(--accent) 38%, #f0e7d8);
   content: "";
 }
 
