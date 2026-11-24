@@ -47,7 +47,6 @@
   --bar-max: 920px;
   --bar-top: 12px;
   --sheet-gutter: 48px;
-  --type-scale: 1;
   color-scheme: light;
 }
 
@@ -1140,6 +1139,7 @@ body.is-resizing {
   position: relative;
   width: var(--sheet-width, calc(100% - var(--sheet-gutter)));
   max-width: none;
+  zoom: var(--sheet-zoom, 1);
   margin: 14px auto 92px;
   padding: 54px var(--sheet-pad) 0;
   overflow: hidden;
@@ -1150,6 +1150,10 @@ body.is-resizing {
 
 .sheet.is-overflow {
   margin-right: 0;
+  margin-left: 0;
+}
+
+.reader.is-overflow .reader-bar {
   margin-left: 0;
 }
 
@@ -1290,7 +1294,7 @@ body.is-resizing {
 .cover-copy h1 {
   margin: 17px 0 9px;
   font-family: var(--serif);
-  font-size: calc(clamp(32px, 3.3vw, 42px) * var(--type-scale));
+  font-size: clamp(32px, 3.3vw, 42px);
   font-weight: 600;
   line-height: 1.2;
   letter-spacing: 0.015em;
@@ -1701,7 +1705,7 @@ body.is-resizing {
 .toc-page-title {
   overflow: hidden;
   font-family: var(--serif);
-  font-size: calc(16px * var(--type-scale));
+  font-size: 16px;
   font-weight: 600;
   line-height: 1.45;
   letter-spacing: 0.01em;
@@ -1877,7 +1881,7 @@ body[data-theme="night"] .tool-btn.is-on {
 .chapter-title {
   margin: 15px 0 11px;
   font-family: var(--serif);
-  font-size: calc(clamp(29px, 3vw, 38px) * var(--type-scale));
+  font-size: clamp(29px, 3vw, 38px);
   font-weight: 600;
   line-height: 1.28;
   letter-spacing: 0.01em;
@@ -1946,7 +1950,7 @@ body[data-theme="night"] .tool-btn.is-on {
 .q-title {
   margin: 0;
   font-family: var(--serif);
-  font-size: calc(21px * var(--type-scale));
+  font-size: 21px;
   font-weight: 600;
   line-height: 1.55;
   letter-spacing: 0.005em;

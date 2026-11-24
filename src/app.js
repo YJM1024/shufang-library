@@ -323,37 +323,41 @@ function applyBodyScale() {
   const available = Math.max(280, readerWidth - gutter);
   const basePage = 920;
   const baseText = basePage - basePad * 2;
-  const scale = state.contentScale === "fit" ? null : Number(state.contentScale);
-  const fitScale = viewport <= 620 ? Math.max(0.75, available / basePage) : available / basePage;
-
-  let pad;
-  let page;
-  let factor;
   const mobile = viewport <= 620;
+  const fixed = state.contentScale !== "fit";
+  const scale = fixed ? Number(state.contentScale) : 1;
 
-  if (state.contentMode === "zoom") {
-    const zoomScale = scale === null || mobile ? fitScale : scale;
-    factor = zoomScale;
-    pad = Math.round(basePad * zoomScale);
-    page = scale === null || mobile ? available : Math.round(basePage * zoomScale);
+  let page;
+  let zoom;
+  let pad;
+
+  if (mobile) {
+    page = available;
+    zoom = 1;
+    pad = basePad;
+  } else if (state.contentMode === "zoom") {
+    page = basePage;
+    pad = basePad;
+    zoom = fixed ? scale : available / basePage;
   } else {
-    factor = 1;
-    if (scale === null || mobile) {
-      pad = basePad;
-      page = available;
-    } else {
-      pad = basePad;
+    zoom = 1;
+    pad = basePad;
+    if (fixed) {
       page = Math.round(baseText * scale + pad * 2);
       if (scale === 1) page = Math.min(page, available);
+    } else {
+      page = available;
     }
   }
+
+  const visualPage = Math.round(page * zoom);
 
   root.style.setProperty("--sheet-gutter", `${gutter}px`);
   root.style.setProperty("--sheet-width", `${page}px`);
   root.style.setProperty("--sheet-pad", `${pad}px`);
-  root.style.setProperty("--bar-max", `${page}px`);
-  root.style.setProperty("--type-scale", String(Number(factor.toFixed(3))));
-  root.style.setProperty("--reader-size", `${Math.round(state.size * factor * 10) / 10}px`);
+  root.style.setProperty("--sheet-zoom", String(Number(zoom.toFixed(4))));
+  root.style.setProperty("--bar-max", `${visualPage}px`);
+  root.style.setProperty("--reader-size", `${state.size}px`);
   updatePanState();
 }
 
@@ -361,6 +365,7 @@ function updatePanState() {
   if (!els.reader) return;
   const overflow = els.reader.scrollWidth - els.reader.clientWidth;
   els.reader.classList.toggle("is-pannable", overflow > 1);
+  els.reader.classList.toggle("is-overflow", overflow > 1);
   els.sheet?.classList.toggle("is-overflow", overflow > 1);
 }
 
