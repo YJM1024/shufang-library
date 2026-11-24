@@ -914,22 +914,24 @@ function toggleChapterCollapse(id) {
 
 function noteCoverage(id, start, end) {
   if (end <= start) return;
-  const merged = mergeIntervals([...(state.coverage.get(id) || []), [start, end]]);
-  state.coverage.set(id, merged);
-  paintEntry(id);
+  const previous = state.coverage.get(id) || [];
+  const merged = mergeIntervals([...previous, [start, end]]);
+  const previousTotal = intervalTotal(previous);
+  const total = intervalTotal(merged);
 
-  if (
-    intervalTotal(merged) >= COVERAGE_FULL &&
-    !state.read.has(id) &&
-    !state.manualUnread.has(id)
-  ) {
+  if (total - previousTotal > 0.0005) {
+    state.coverage.set(id, merged);
+    paintEntry(id);
+    scheduleSave();
+  }
+
+  if (total >= COVERAGE_FULL && !state.read.has(id)) {
+    state.manualUnread.delete(id);
     state.read.add(id);
     applyReadUI();
     updateProgress();
     scheduleSave();
-    return;
   }
-  scheduleSave();
 }
 
 function sampleCoverage() {
@@ -958,10 +960,6 @@ function sampleCoverage() {
     const visibleTop = Math.max(rect.top, top);
     const visibleBottom = Math.min(rect.bottom, bottom);
     if (visibleBottom - visibleTop < 6) {
-      state.visibleSince.delete(id);
-      return;
-    }
-    if (state.manualUnread.has(id)) {
       state.visibleSince.delete(id);
       return;
     }
