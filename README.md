@@ -41,16 +41,9 @@ node serve.mjs
 - `books/`：书稿源，仓库中不包含，需要按上述约定自行创建。
 - `site/`：构建产物，仓库中不包含。
 
-## 测试
+## 开发与测试
 
-测试脚本通过 Chrome DevTools Protocol 驱动无头浏览器，需要先启动 `serve.mjs`，并在本地准备好对应的书稿数据：
-
-- `node tools/test-highlight.mjs`：代码高亮标记配平与原文还原。
-- `node tools/test-codeblock.mjs`：代码块结构、复制结果与窄屏布局。
-- `node tools/test-lightbox.mjs`：封面浮窗的缩放、拖动与关闭。
-- `node tools/test-interactions.mjs`：目录、书签、切书、字号、夜间模式与 430px 布局。
-- `node tools/test-readstate.mjs`：两级目录、1 秒停留、100% 覆盖、手动标记与收起持久化。
-- `node tools/test-resizers.mjs`：分栏拖动、25% 上限与窄屏隐藏。
+公开仓库只保留网站实现与构建工具。浏览器验收脚本依赖本地书稿数据（题库地图、题目结构、封面与代码块样例等），未随仓库发布；本地构建后可以用 `tools/shot.mjs` 截图，或用 Chrome DevTools Protocol 自行检查页面。
 
 ## 说明
 
