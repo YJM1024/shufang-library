@@ -62,6 +62,8 @@ const state = {
   store: emptyStore(),
   size: 17,
   theme: "paper",
+  contentScale: "1",
+  contentMode: "width",
   railBooks: 252,
   railToc: 276,
   token: 0,
@@ -240,6 +242,10 @@ function loadSettings() {
   const railToc = Number(saved.railToc);
   if (Number.isFinite(railBooks) && railBooks > 0) state.railBooks = railBooks;
   if (Number.isFinite(railToc) && railToc > 0) state.railToc = railToc;
+
+  const scale = String(saved.contentScale ?? "1");
+  state.contentScale = ["1", "1.1", "1.2", "1.3", "fit"].includes(scale) ? scale : "1";
+  state.contentMode = saved.contentMode === "zoom" ? "zoom" : "width";
 }
 
 function saveSettings() {
@@ -248,6 +254,8 @@ function saveSettings() {
     theme: state.theme,
     railBooks: Math.round(state.railBooks),
     railToc: Math.round(state.railToc),
+    contentScale: state.contentScale,
+    contentMode: state.contentMode,
   });
 }
 
@@ -306,14 +314,45 @@ function initResizers() {
   }
 }
 
+function applyBodyScale() {
+  const root = document.documentElement;
+  const viewport = window.innerWidth;
+  const gutter = viewport <= 620 ? 0 : viewport <= 980 ? 28 : viewport <= 1360 ? 36 : 48;
+  const readerWidth = els.reader?.clientWidth || Math.max(320, viewport - 528);
+  const available = Math.max(280, readerWidth - gutter);
+  const base = 920;
+  const fitScale = clamp(available / base, 0.75, 1.6);
+  const scale = Number(state.contentScale);
+  const factor =
+    state.contentMode === "zoom"
+      ? state.contentScale === "fit"
+        ? fitScale
+        : scale
+      : 1;
+  const font = Math.round(state.size * factor * 10) / 10;
+  const max = viewport <= 620 || state.contentScale === "fit" ? "none" : `${Math.round(base * scale)}px`;
+
+  root.style.setProperty("--sheet-gutter", `${gutter}px`);
+  root.style.setProperty("--sheet-max", max);
+  root.style.setProperty("--bar-max", max);
+  root.style.setProperty("--type-scale", String(Number(factor.toFixed(3))));
+  root.style.setProperty("--reader-size", `${font}px`);
+}
+
 function applySettings() {
-  document.documentElement.style.setProperty("--reader-size", `${state.size}px`);
   document.body.dataset.theme = state.theme;
   if (els.sizeVal) els.sizeVal.textContent = String(state.size);
   applyRailWidths();
+  applyBodyScale();
 
   for (const button of $$("[data-set-theme]")) {
     button.classList.toggle("is-on", button.dataset.setTheme === state.theme);
+  }
+  for (const button of $$("[data-content-scale]")) {
+    button.classList.toggle("is-on", button.dataset.contentScale === state.contentScale);
+  }
+  for (const button of $$("[data-content-mode]")) {
+    button.classList.toggle("is-on", button.dataset.contentMode === state.contentMode);
   }
 
   if (els.btnTheme) {
@@ -354,6 +393,7 @@ async function init() {
     els.bookCount.textContent = String(state.books.length);
     renderBookList();
     els.app.hidden = false;
+    applyBodyScale();
 
     const params = new URLSearchParams(location.search);
     const requested = params.get("book");
@@ -1258,6 +1298,22 @@ for (const button of $$("[data-set-theme]")) {
   button.addEventListener("click", () => setTheme(button.dataset.setTheme));
 }
 
+for (const button of $$("[data-content-scale]")) {
+  button.addEventListener("click", () => {
+    state.contentScale = button.dataset.contentScale;
+    applySettings();
+    saveSettings();
+  });
+}
+
+for (const button of $$("[data-content-mode]")) {
+  button.addEventListener("click", () => {
+    state.contentMode = button.dataset.contentMode;
+    applySettings();
+    saveSettings();
+  });
+}
+
 els.btnTheme.addEventListener("click", () => {
   setTheme(state.theme === "night" ? "paper" : "night");
 });
@@ -1318,8 +1374,13 @@ window.addEventListener("hashchange", () => {
 window.addEventListener("resize", () => {
   if (window.innerWidth > 1360) closeDrawers();
   applyRailWidths();
+  applyBodyScale();
   updateActive(true);
 });
+
+if (window.ResizeObserver && els.reader) {
+  new ResizeObserver(() => applyBodyScale()).observe(els.reader);
+}
 
 window.addEventListener("beforeunload", () => {
   saveProgress();

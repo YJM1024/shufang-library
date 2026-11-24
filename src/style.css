@@ -46,6 +46,9 @@
   --rail-toc-w: 276px;
   --bar-max: 920px;
   --bar-top: 12px;
+  --sheet-max: 920px;
+  --sheet-gutter: 48px;
+  --type-scale: 1;
   color-scheme: light;
 }
 
@@ -1066,14 +1069,18 @@ body.is-resizing {
 }
 
 .size-control,
-.theme-control {
+.theme-control,
+.scale-control {
   display: flex;
   align-items: center;
   gap: 3px;
+  flex-wrap: wrap;
+  justify-content: flex-end;
 }
 
 .size-control button,
-.theme-control button {
+.theme-control button,
+.scale-control button {
   min-width: 28px;
   height: 26px;
   padding: 0 7px;
@@ -1082,6 +1089,17 @@ body.is-resizing {
   font-family: var(--mono);
   font-size: 10px;
   color: var(--ink-2);
+}
+
+.scale-control button {
+  min-width: 24px;
+  padding: 0 5px;
+  font-size: 9px;
+}
+
+.scale-control button[data-content-scale="fit"] {
+  font-family: var(--sans);
+  font-size: 9.5px;
 }
 
 .size-control output {
@@ -1099,8 +1117,10 @@ body.is-resizing {
 
 .size-control button:hover,
 .theme-control button:hover,
+.scale-control button:hover,
 .size-control button.is-on,
-.theme-control button.is-on {
+.theme-control button.is-on,
+.scale-control button.is-on {
   border-color: var(--accent);
   color: var(--accent);
 }
@@ -1109,8 +1129,8 @@ body.is-resizing {
 
 .sheet {
   position: relative;
-  width: calc(100% - 48px);
-  max-width: var(--bar-max);
+  width: calc(100% - var(--sheet-gutter));
+  max-width: var(--sheet-max);
   margin: 14px auto 92px;
   padding: 54px var(--sheet-pad) 0;
   overflow: hidden;
@@ -1256,7 +1276,7 @@ body.is-resizing {
 .cover-copy h1 {
   margin: 17px 0 9px;
   font-family: var(--serif);
-  font-size: clamp(32px, 3.3vw, 42px);
+  font-size: calc(clamp(32px, 3.3vw, 42px) * var(--type-scale));
   font-weight: 600;
   line-height: 1.2;
   letter-spacing: 0.015em;
@@ -1667,7 +1687,7 @@ body.is-resizing {
 .toc-page-title {
   overflow: hidden;
   font-family: var(--serif);
-  font-size: 16px;
+  font-size: calc(16px * var(--type-scale));
   font-weight: 600;
   line-height: 1.45;
   letter-spacing: 0.01em;
@@ -1843,7 +1863,7 @@ body[data-theme="night"] .tool-btn.is-on {
 .chapter-title {
   margin: 15px 0 11px;
   font-family: var(--serif);
-  font-size: clamp(29px, 3vw, 38px);
+  font-size: calc(clamp(29px, 3vw, 38px) * var(--type-scale));
   font-weight: 600;
   line-height: 1.28;
   letter-spacing: 0.01em;
@@ -1912,7 +1932,7 @@ body[data-theme="night"] .tool-btn.is-on {
 .q-title {
   margin: 0;
   font-family: var(--serif);
-  font-size: 21px;
+  font-size: calc(21px * var(--type-scale));
   font-weight: 600;
   line-height: 1.55;
   letter-spacing: 0.005em;
@@ -2417,7 +2437,7 @@ body[data-theme="night"] .tool-btn.is-on {
   }
 
   .sheet {
-    width: calc(100% - 36px);
+    --sheet-gutter: 36px;
   }
 }
 
@@ -2433,7 +2453,7 @@ body[data-theme="night"] .tool-btn.is-on {
   }
 
   .sheet {
-    width: calc(100% - 28px);
+    --sheet-gutter: 28px;
     margin-top: 10px;
     margin-bottom: 40px;
   }
@@ -2545,7 +2565,8 @@ body[data-theme="night"] .tool-btn.is-on {
   }
 
   .sheet {
-    width: 100%;
+    --sheet-gutter: 0px;
+    --sheet-max: none;
     margin: 8px 0 0;
     border-right: 0;
     border-left: 0;

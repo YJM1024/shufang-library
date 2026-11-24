@@ -91,6 +91,23 @@ node serve.mjs</pre>
               <button type="button" data-set-theme="night">夜</button>
             </div>
           </div>
+          <div class="settings-row">
+            <span class="settings-label">正文</span>
+            <div class="scale-control" role="group" aria-label="正文宽度">
+              <button type="button" data-content-scale="1" title="版心 100%">100</button>
+              <button type="button" data-content-scale="1.1" title="版心 110%">110</button>
+              <button type="button" data-content-scale="1.2" title="版心 120%">120</button>
+              <button type="button" data-content-scale="1.3" title="版心 130%">130</button>
+              <button type="button" data-content-scale="fit" title="自适应右栏宽度">自适应</button>
+            </div>
+          </div>
+          <div class="settings-row">
+            <span class="settings-label">方式</span>
+            <div class="scale-control" role="group" aria-label="缩放方式">
+              <button type="button" data-content-mode="width" title="只改版心宽度，字号不变">宽度</button>
+              <button type="button" data-content-mode="zoom" title="字号与版心一起缩放">整体</button>
+            </div>
+          </div>
         </div>
       </header>
       <div class="sheet" id="sheet"></div>
