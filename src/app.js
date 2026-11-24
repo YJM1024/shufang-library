@@ -318,25 +318,50 @@ function applyBodyScale() {
   const root = document.documentElement;
   const viewport = window.innerWidth;
   const gutter = viewport <= 620 ? 0 : viewport <= 980 ? 28 : viewport <= 1360 ? 36 : 48;
+  const basePad = viewport <= 620 ? 22 : viewport <= 760 ? 30 : viewport <= 980 ? 46 : 64;
   const readerWidth = els.reader?.clientWidth || Math.max(320, viewport - 528);
   const available = Math.max(280, readerWidth - gutter);
-  const base = 920;
-  const fitScale = clamp(available / base, 0.75, 1.6);
-  const scale = Number(state.contentScale);
-  const factor =
-    state.contentMode === "zoom"
-      ? state.contentScale === "fit"
-        ? fitScale
-        : scale
-      : 1;
-  const font = Math.round(state.size * factor * 10) / 10;
-  const max = viewport <= 620 || state.contentScale === "fit" ? "none" : `${Math.round(base * scale)}px`;
+  const basePage = 920;
+  const baseText = basePage - basePad * 2;
+  const scale = state.contentScale === "fit" ? null : Number(state.contentScale);
+  const fitScale = viewport <= 620 ? Math.max(0.75, available / basePage) : available / basePage;
+
+  let pad;
+  let page;
+  let factor;
+  const mobile = viewport <= 620;
+
+  if (state.contentMode === "zoom") {
+    const zoomScale = scale === null || mobile ? fitScale : scale;
+    factor = zoomScale;
+    pad = Math.round(basePad * zoomScale);
+    page = scale === null || mobile ? available : Math.round(basePage * zoomScale);
+  } else {
+    factor = 1;
+    if (scale === null || mobile) {
+      pad = basePad;
+      page = available;
+    } else {
+      pad = basePad;
+      page = Math.round(baseText * scale + pad * 2);
+      if (scale === 1) page = Math.min(page, available);
+    }
+  }
 
   root.style.setProperty("--sheet-gutter", `${gutter}px`);
-  root.style.setProperty("--sheet-max", max);
-  root.style.setProperty("--bar-max", max);
+  root.style.setProperty("--sheet-width", `${page}px`);
+  root.style.setProperty("--sheet-pad", `${pad}px`);
+  root.style.setProperty("--bar-max", `${page}px`);
   root.style.setProperty("--type-scale", String(Number(factor.toFixed(3))));
-  root.style.setProperty("--reader-size", `${font}px`);
+  root.style.setProperty("--reader-size", `${Math.round(state.size * factor * 10) / 10}px`);
+  updatePanState();
+}
+
+function updatePanState() {
+  if (!els.reader) return;
+  const overflow = els.reader.scrollWidth - els.reader.clientWidth;
+  els.reader.classList.toggle("is-pannable", overflow > 1);
+  els.sheet?.classList.toggle("is-overflow", overflow > 1);
 }
 
 function applySettings() {
@@ -455,6 +480,7 @@ async function loadBook(id, { initial = false } = {}) {
 
   renderSheet();
   renderTocRail();
+  applyBodyScale();
   updateBookListCurrent(index.id);
 
   els.tocBook.textContent = data.meta.title;
@@ -536,6 +562,7 @@ function loadPdf(index, { initial = false } = {}) {
 
   renderPdfSheet();
   renderTocRail();
+  applyBodyScale();
   updateBookListCurrent(index.id);
 
   els.tocBook.textContent = index.title;
@@ -1354,6 +1381,39 @@ document.addEventListener("keydown", (event) => {
 });
 
 els.reader.addEventListener("scroll", onScroll, { passive: true });
+
+let readerPan = null;
+
+els.reader.addEventListener("pointerdown", (event) => {
+  if (event.button !== 0) return;
+  if (els.reader.scrollWidth - els.reader.clientWidth <= 1) return;
+  if (
+    event.target.closest(
+      "a, button, input, textarea, select, [contenteditable='true'], [role='button'], .cover-visual, .toc-page-list, .code-block",
+    )
+  ) {
+    return;
+  }
+  readerPan = { id: event.pointerId, x: event.clientX, left: els.reader.scrollLeft };
+  els.reader.classList.add("is-panning");
+  els.reader.setPointerCapture(event.pointerId);
+  event.preventDefault();
+});
+
+els.reader.addEventListener("pointermove", (event) => {
+  if (!readerPan || event.pointerId !== readerPan.id) return;
+  els.reader.scrollLeft = readerPan.left - (event.clientX - readerPan.x);
+  if (event.cancelable) event.preventDefault();
+});
+
+const endReaderPan = () => {
+  if (!readerPan) return;
+  readerPan = null;
+  els.reader.classList.remove("is-panning");
+};
+
+els.reader.addEventListener("pointerup", endReaderPan);
+els.reader.addEventListener("pointercancel", endReaderPan);
 
 for (const type of ["wheel", "touchstart", "pointerdown", "keydown"]) {
   els.reader.addEventListener(

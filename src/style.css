@@ -46,7 +46,6 @@
   --rail-toc-w: 276px;
   --bar-max: 920px;
   --bar-top: 12px;
-  --sheet-max: 920px;
   --sheet-gutter: 48px;
   --type-scale: 1;
   color-scheme: light;
@@ -875,12 +874,21 @@ body.is-resizing {
 .reader {
   position: relative;
   min-width: 0;
-  overflow-x: hidden;
+  overflow-x: auto;
   overflow-y: auto;
   background: var(--canvas);
   scroll-padding-top: 60px;
   scrollbar-width: thin;
   scrollbar-color: rgba(80, 68, 48, 0.34) transparent;
+}
+
+.reader.is-pannable {
+  cursor: grab;
+}
+
+.reader.is-panning {
+  cursor: grabbing;
+  user-select: none;
 }
 
 .reader-mask {
@@ -896,6 +904,7 @@ body.is-resizing {
 
 .reader::-webkit-scrollbar {
   width: 10px;
+  height: 10px;
 }
 
 .reader::-webkit-scrollbar-track {
@@ -1129,14 +1138,19 @@ body.is-resizing {
 
 .sheet {
   position: relative;
-  width: calc(100% - var(--sheet-gutter));
-  max-width: var(--sheet-max);
+  width: var(--sheet-width, calc(100% - var(--sheet-gutter)));
+  max-width: none;
   margin: 14px auto 92px;
   padding: 54px var(--sheet-pad) 0;
   overflow: hidden;
   border: 1px solid var(--line);
   background: var(--paper);
   box-shadow: 0 28px 70px rgba(20, 16, 10, 0.16), 0 1px 0 rgba(255, 255, 255, 0.4) inset;
+}
+
+.sheet.is-overflow {
+  margin-right: 0;
+  margin-left: 0;
 }
 
 .cover-page,
@@ -2566,7 +2580,6 @@ body[data-theme="night"] .tool-btn.is-on {
 
   .sheet {
     --sheet-gutter: 0px;
-    --sheet-max: none;
     margin: 8px 0 0;
     border-right: 0;
     border-left: 0;
