@@ -359,15 +359,78 @@ function applyBodyScale() {
   }
 
   const visualPage = Math.round(page * zoom);
+  const contentWidth = Math.max(240, page - pad * 2);
+  const frontWidth = mobile ? contentWidth : Math.min(contentWidth, Math.round(646 * (read / baseRead)));
+  const tocWidth = mobile ? contentWidth : Math.min(contentWidth, Math.round(760 * (read / baseRead)));
 
   root.style.setProperty("--sheet-gutter", `${gutter}px`);
   root.style.setProperty("--sheet-width", `${page}px`);
   root.style.setProperty("--sheet-pad", `${pad}px`);
   root.style.setProperty("--reading-width", `${read}px`);
+  root.style.setProperty("--front-width", `${frontWidth}px`);
+  root.style.setProperty("--toc-width", `${tocWidth}px`);
   root.style.setProperty("--sheet-zoom", String(Number(zoom.toFixed(4))));
   root.style.setProperty("--bar-max", `${visualPage}px`);
   root.style.setProperty("--reader-size", `${state.size}px`);
   updatePanState();
+}
+
+function captureScrollAnchor() {
+  if (!els.reader || els.reader.scrollTop < 4) return null;
+  const readerRect = els.reader.getBoundingClientRect();
+  const x = readerRect.left + Math.min(260, Math.max(120, readerRect.width * 0.3));
+  const y = readerRect.top + 96;
+
+  try {
+    const position = document.caretPositionFromPoint?.(x, y);
+    if (position?.offsetNode?.nodeType === Node.TEXT_NODE) {
+      const range = document.createRange();
+      range.setStart(position.offsetNode, position.offset);
+      range.setEnd(position.offsetNode, position.offset);
+      const box = range.getClientRects()[0] || range.getBoundingClientRect();
+      if (box && box.height > 0) {
+        return { node: position.offsetNode, offset: position.offset, y: box.top };
+      }
+    }
+  } catch {
+    // 某些排版节点不支持按字符取位置，退回按元素比例锚定。
+  }
+
+  const hit = document.elementFromPoint(x, y)?.closest(
+    "#sheet .prose p, #sheet .prose li, #sheet .prose h2, #sheet .prose h3, #sheet .prose h4, #sheet .prose blockquote, #sheet .prose table, #sheet .prose pre, #sheet .question, #sheet .chapter, #sheet .q-extra, #sheet .front-section, #sheet .toc-page, #sheet .back-cover",
+  );
+  if (!hit) return null;
+  const rect = hit.getBoundingClientRect();
+  const ratio = Math.min(1, Math.max(0, (y - rect.top) / Math.max(1, rect.height)));
+  return { el: hit, ratio, y: rect.top + ratio * rect.height };
+}
+
+function restoreScrollAnchor(anchor) {
+  if (!anchor || !els.reader) return;
+  let top = null;
+
+  if (anchor.node?.isConnected) {
+    const range = document.createRange();
+    range.setStart(anchor.node, anchor.offset);
+    range.setEnd(anchor.node, anchor.offset);
+    const box = range.getClientRects()[0] || range.getBoundingClientRect();
+    if (box && box.height > 0) top = box.top;
+  }
+
+  if (top === null && anchor.el?.isConnected) {
+    const rect = anchor.el.getBoundingClientRect();
+    top = rect.top + anchor.ratio * rect.height;
+  }
+
+  if (top === null) return;
+  const delta = top - anchor.y;
+  if (Math.abs(delta) > 0.5) els.reader.scrollTop += delta;
+}
+
+function applySettingsWithAnchor() {
+  const anchor = captureScrollAnchor();
+  applySettings();
+  restoreScrollAnchor(anchor);
 }
 
 function updatePanState() {
@@ -669,7 +732,7 @@ function setUrl(hash) {
 
 /* ---------- 左栏 ---------- */
 
-const CATEGORY_ORDER = ["Agent", "Coding", "AI Discussions", "AI Coding Agents Reference", "管理"];
+const CATEGORY_ORDER = ["Agent", "Coding", "AI Discussions", "AI Coding Agents Reference", "管理", "文学"];
 
 function bookCard(book) {
   const saved = state.store.books[book.id] || {};
@@ -1342,7 +1405,7 @@ for (const button of $$("[data-set-theme]")) {
 for (const button of $$("[data-content-scale]")) {
   button.addEventListener("click", () => {
     state.contentScale = button.dataset.contentScale;
-    applySettings();
+    applySettingsWithAnchor();
     saveSettings();
   });
 }
@@ -1350,7 +1413,7 @@ for (const button of $$("[data-content-scale]")) {
 for (const button of $$("[data-content-mode]")) {
   button.addEventListener("click", () => {
     state.contentMode = button.dataset.contentMode;
-    applySettings();
+    applySettingsWithAnchor();
     saveSettings();
   });
 }
